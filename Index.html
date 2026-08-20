@@ -1,0 +1,151 @@
+<!DOCTYPE html>
+<html lang="hi">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Video Clip & Shuffle Tool</title>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; font-family: system-ui, -apple-system, sans-serif; }
+    body { background: #0f172a; color: #f8fafc; padding: 20px; display: flex; justify-content: center; }
+    .card { background: #1e293b; width: 100%; max-width: 500px; padding: 24px; border-radius: 16px; box-shadow: 0 10px 25px rgba(0,0,0,0.4); }
+    h2 { text-align: center; margin-bottom: 20px; color: #38bdf8; font-size: 22px; }
+    .group { margin-bottom: 16px; }
+    label { display: block; margin-bottom: 6px; font-size: 14px; color: #94a3b8; }
+    input, select, button { width: 100%; padding: 12px; border-radius: 8px; border: 1px solid #334155; background: #0f172a; color: #fff; font-size: 15px; }
+    input[type="file"] { border: 1px dashed #38bdf8; padding: 10px; cursor: pointer; }
+    button { background: #2563eb; color: #fff; font-weight: bold; border: none; cursor: pointer; margin-top: 10px; transition: 0.2s; }
+    button:hover { background: #1d4ed8; }
+    button.shuffle-btn { background: #7c3aed; }
+    button.shuffle-btn:hover { background: #6d28d9; }
+    button.export-btn { background: #059669; }
+    button.export-btn:hover { background: #047857; }
+    .status { margin-top: 15px; font-size: 14px; text-align: center; color: #38bdf8; word-break: break-word; }
+    .clip-list { margin-top: 15px; display: flex; flex-direction: column; gap: 8px; max-height: 200px; overflow-y: auto; }
+    .clip-item { background: #0f172a; padding: 10px; border-radius: 6px; font-size: 13px; display: flex; justify-content: space-between; border-left: 4px solid #38bdf8; }
+    #videoPreview { display: none; }
+  </style>
+</head>
+<body>
+
+<div class="card">
+  <h2>⚡ Video Clip & Shuffler</h2>
+  
+  <div class="group">
+    <label>1. वीडियो सेलेक्ट करें</label>
+    <input type="file" id="videoInput" accept="video/*">
+  </div>
+
+  <div class="group">
+    <label>2. Ratio चुने</label>
+    <select id="ratioSelect">
+      <option value="16:9">16:9 (Landscape / YouTube)</option>
+      <option value="9:16">9:16 (Shorts / Reels)</option>
+      <option value="1:1">1:1 (Square)</option>
+    </select>
+  </div>
+
+  <div class="group">
+    <label>3. कितनी Clips बनानी हैं?</label>
+    <input type="number" id="clipCount" value="4" min="2" max="50">
+  </div>
+
+  <button id="processBtn" onclick="processClips()">Proceed & Cut Clips</button>
+  <button id="shuffleBtn" class="shuffle-btn" onclick="shuffleClips()" style="display:none;">🔀 Shuffle Clips</button>
+  <button id="exportBtn" class="export-btn" onclick="exportClips()" style="display:none;">📥 Export All Clips (ZIP for VN)</button>
+
+  <div class="status" id="statusText"></div>
+  <div class="clip-list" id="clipContainer"></div>
+
+  <video id="videoPreview" playsinline muted></video>
+</div>
+
+<script>
+let clipsData = [];
+let sourceFile = null;
+
+document.getElementById('videoInput').addEventListener('change', function(e) {
+  sourceFile = e.target.files[0];
+  if(sourceFile) {
+    document.getElementById('statusText').innerText = "वीडियो लोड हो गया: " + sourceFile.name;
+  }
+});
+
+async function processClips() {
+  if (!sourceFile) return alert("कृपया पहले एक वीडियो सेलेक्ट करें!");
+  const count = parseInt(document.getElementById('clipCount').value);
+  if (count < 2) return alert("कम से कम 2 क्लिप्स चुनें");
+
+  const status = document.getElementById('statusText');
+  status.innerText = "वीडियो की अवधि जांची जा रही है...";
+
+  const video = document.getElementById('videoPreview');
+  video.src = URL.createObjectURL(sourceFile);
+
+  video.onloadedmetadata = async function() {
+    const duration = video.duration;
+    const clipLength = duration / count;
+    clipsData = [];
+
+    for(let i = 0; i < count; i++) {
+      let start = i * clipLength;
+      let end = (i + 1) * clipLength;
+      clipsData.push({
+        id: i + 1,
+        title: `Clip_${i + 1}`,
+        start: start.toFixed(1),
+        end: end.toFixed(1),
+        duration: (end - start).toFixed(1)
+      });
+    }
+
+    renderClips();
+    status.innerText = `सफलतापूर्वक ${count} क्लिप्स तैयार हो गईं!`;
+    document.getElementById('shuffleBtn').style.display = "block";
+    document.getElementById('exportBtn').style.display = "block";
+  };
+}
+
+function renderClips() {
+  const container = document.getElementById('clipContainer');
+  container.innerHTML = "";
+  clipsData.forEach((c, index) => {
+    container.innerHTML += `
+      <div class="clip-item">
+        <span><b>Seq ${index + 1}:</b> ${c.title}</span>
+        <span>${c.start}s - ${c.end}s (${c.duration}s)</span>
+      </div>
+    `;
+  });
+}
+
+function shuffleClips() {
+  for (let i = clipsData.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1));
+    [clipsData[i], clipsData[j]] = [clipsData[j], clipsData[i]];
+  }
+  renderClips();
+  document.getElementById('statusText').innerText = "क्लिप्स शफल (आगे-पीछे) हो चुकी हैं!";
+}
+
+async function exportClips() {
+  const status = document.getElementById('statusText');
+  status.innerText = "ZIP फाइल तैयार हो रही है...";
+  
+  const zip = new JSZip();
+  const meta = clipsData.map((c, i) => `Sequence ${i + 1}: Clip ${c.id} [${c.start}s to ${c.end}s]`).join('\n');
+  
+  zip.file("shuffle_sequence_for_VN.txt", meta);
+  zip.file(sourceFile.name, sourceFile);
+
+  const content = await zip.generateAsync({type: "blob"});
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(content);
+  a.download = "clips_project.zip";
+  a.click();
+
+  status.innerText = "प्रोजेक्ट डाउनलोड हो गया! ZIP खोलकर VN ऐप में इंपोर्ट करें।";
+}
+</script>
+</body>
+</html>
