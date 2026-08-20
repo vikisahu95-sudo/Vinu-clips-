@@ -2,42 +2,45 @@
 <html lang="hi">
 <head>
   <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Video Clip & Shuffle Pro</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <title>Video Clip & Shuffler Pro</title>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
   <style>
-    * { box-sizing: border-box; margin: 0; padding: 0; font-family: system-ui, -apple-system, sans-serif; }
-    body { background: #0f172a; color: #f8fafc; padding: 15px; display: flex; justify-content: center; }
-    .card { background: #1e293b; width: 100%; max-width: 500px; padding: 20px; border-radius: 16px; box-shadow: 0 10px 25px rgba(0,0,0,0.4); position: relative; }
+    * { box-sizing: border-box; margin: 0; padding: 0; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; }
+    body { background: #0b0f19; color: #f8fafc; padding: 15px; display: flex; justify-content: center; }
+    .card { background: #131c2e; width: 100%; max-width: 480px; padding: 20px; border-radius: 16px; border: 1px solid #1e293b; box-shadow: 0 10px 30px rgba(0,0,0,0.5); position: relative; }
     
     .header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; }
-    h2 { color: #38bdf8; font-size: 20px; }
-    .menu-btn { background: transparent; border: none; font-size: 24px; color: #fff; cursor: pointer; width: auto; padding: 0 5px; }
+    h2 { color: #38bdf8; font-size: 19px; font-weight: 700; }
+    .menu-btn { background: #1e293b; border: 1px solid #334155; font-size: 18px; color: #f8fafc; border-radius: 8px; width: 36px; height: 36px; cursor: pointer; display: flex; align-items: center; justify-content: center; }
     
-    /* 3-Dots Dropdown */
-    .dropdown { display: none; position: absolute; right: 20px; top: 55px; background: #334155; border-radius: 8px; box-shadow: 0 4px 12px rgba(0,0,0,0.5); z-index: 10; width: 180px; overflow: hidden; }
-    .dropdown button { background: transparent; color: #fff; border: none; padding: 12px 16px; text-align: left; width: 100%; font-size: 14px; margin: 0; cursor: pointer; }
-    .dropdown button:hover { background: #475569; }
+    .dropdown { display: none; position: absolute; right: 20px; top: 60px; background: #1e293b; border: 1px solid #334155; border-radius: 10px; box-shadow: 0 10px 20px rgba(0,0,0,0.5); z-index: 50; width: 170px; overflow: hidden; }
+    .dropdown button { background: transparent; color: #fff; border: none; padding: 12px 16px; text-align: left; width: 100%; font-size: 14px; cursor: pointer; display: flex; gap: 8px; }
+    .dropdown button:active { background: #334155; }
 
     .group { margin-bottom: 14px; }
-    label { display: block; margin-bottom: 6px; font-size: 13px; color: #94a3b8; }
-    input, select, button { width: 100%; padding: 12px; border-radius: 8px; border: 1px solid #334155; background: #0f172a; color: #fff; font-size: 14px; }
-    input[type="file"] { border: 1px dashed #38bdf8; padding: 10px; cursor: pointer; }
-    
-    .btn { font-weight: bold; border: none; cursor: pointer; margin-top: 10px; }
-    .btn-blue { background: #2563eb; }
+    label { display: block; margin-bottom: 6px; font-size: 13px; color: #94a3b8; font-weight: 500; }
+    input, select, button { width: 100%; padding: 12px; border-radius: 8px; border: 1px solid #334155; background: #0b0f19; color: #fff; font-size: 14px; outline: none; }
+    input[type="file"] { border: 1px dashed #38bdf8; padding: 12px; }
+
+    .btn-action { margin-top: 10px; font-weight: 600; border: none; cursor: pointer; transition: 0.2s; }
+    .btn-process { background: #2563eb; }
     .btn-shuffle { background: #7c3aed; display: none; }
     .btn-export { background: #059669; display: none; }
-    .btn:disabled { background: #475569; cursor: not-allowed; }
+    .btn-action:disabled { background: #334155; color: #64748b; cursor: not-allowed; }
 
-    .status { margin-top: 12px; font-size: 13px; text-align: center; color: #38bdf8; font-weight: 500; }
-    .clip-list { margin-top: 15px; display: flex; flex-direction: column; gap: 8px; max-height: 180px; overflow-y: auto; }
-    .clip-item { background: #0f172a; padding: 10px; border-radius: 6px; font-size: 12px; display: flex; justify-content: space-between; border-left: 4px solid #38bdf8; }
+    .progress-bar-container { background: #0b0f19; border-radius: 10px; height: 10px; width: 100%; overflow: hidden; margin-top: 12px; display: none; border: 1px solid #334155; }
+    .progress-bar { background: #38bdf8; height: 100%; width: 0%; transition: width 0.2s ease; }
+    
+    .status { margin-top: 12px; font-size: 13px; text-align: center; color: #38bdf8; min-height: 18px; word-break: break-word; }
+    .clip-list { margin-top: 14px; display: flex; flex-direction: column; gap: 8px; max-height: 180px; overflow-y: auto; }
+    .clip-item { background: #0b0f19; padding: 10px 12px; border-radius: 8px; font-size: 13px; display: flex; justify-content: space-between; border-left: 4px solid #38bdf8; }
 
-    /* History Modal */
-    .modal { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.7); justify-content: center; align-items: center; padding: 20px; z-index: 100; }
-    .modal-content { background: #1e293b; padding: 20px; border-radius: 12px; width: 100%; max-width: 400px; max-height: 80vh; overflow-y: auto; }
-    .history-item { background: #0f172a; padding: 10px; border-radius: 6px; margin-bottom: 8px; font-size: 12px; border-left: 3px solid #10b981; }
+    /* Modal */
+    .modal { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.8); justify-content: center; align-items: center; padding: 15px; z-index: 100; }
+    .modal-content { background: #131c2e; padding: 20px; border-radius: 14px; width: 100%; max-width: 420px; max-height: 85vh; display: flex; flex-direction: column; border: 1px solid #334155; }
+    .history-scroll { overflow-y: auto; margin: 15px 0; display: flex; flex-direction: column; gap: 8px; }
+    .history-card { background: #0b0f19; padding: 12px; border-radius: 8px; border-left: 3px solid #10b981; font-size: 13px; }
   </style>
 </head>
 <body>
@@ -48,13 +51,13 @@
     <button class="menu-btn" onclick="toggleMenu()">⋮</button>
   </div>
 
-  <!-- 3-Dots Menu -->
+  <!-- Menu -->
   <div class="dropdown" id="dropdownMenu">
-    <button onclick="newProject()">➕ New Project</button>
-    <button onclick="showHistory()">📜 History</button>
+    <button onclick="newProject()">✨ New Project</button>
+    <button onclick="openHistory()">📜 History (Last 10)</button>
   </div>
 
-  <div id="mainForm">
+  <div id="setupView">
     <div class="group">
       <label>1. वीडियो सेलेक्ट करें</label>
       <input type="file" id="videoInput" accept="video/*">
@@ -71,99 +74,110 @@
 
     <div class="group">
       <label>3. कितनी Clips बनानी हैं?</label>
-      <input type="number" id="clipCount" value="4" min="2" max="30">
+      <input type="number" id="clipCount" value="4" min="2" max="25">
     </div>
 
-    <button id="processBtn" class="btn btn-blue" onclick="processClips()">1. Process & Split</button>
-    <button id="shuffleBtn" class="btn btn-shuffle" onclick="shuffleClips()">2. 🔀 Shuffle Order</button>
-    <button id="exportBtn" class="btn btn-export" onclick="exportClips()">3. 📥 Cut & Export Clips for VN</button>
+    <button id="processBtn" class="btn-action btn-process" onclick="processClips()">1. Process & Split</button>
+    <button id="shuffleBtn" class="btn-action btn-shuffle" onclick="shuffleClips()">2. 🔀 Shuffle Order</button>
+    <button id="exportBtn" class="btn-action btn-export" onclick="exportClips()">3. 📥 Cut & Export Clips (ZIP for VN)</button>
+
+    <div class="progress-bar-container" id="pBarCont">
+      <div class="progress-bar" id="pBar"></div>
+    </div>
   </div>
 
   <div class="status" id="statusText"></div>
   <div class="clip-list" id="clipContainer"></div>
 
-  <video id="videoPreview" style="display:none;" playsinline muted></video>
+  <video id="sourceVideo" style="display:none;" playsinline muted></video>
   <canvas id="renderCanvas" style="display:none;"></canvas>
 </div>
 
 <!-- History Modal -->
 <div class="modal" id="historyModal">
   <div class="modal-content">
-    <h3 style="color:#38bdf8; margin-bottom: 12px;">📁 Project History</h3>
-    <div id="historyList">कोई प्रोजेक्ट हिस्ट्री नहीं है।</div>
-    <button class="btn btn-blue" onclick="closeHistory()" style="margin-top:15px;">Close</button>
+    <div style="display:flex; justify-content:space-between; align-items:center;">
+      <h3 style="color:#38bdf8; font-size:16px;">📁 Project History</h3>
+      <button onclick="clearHistory()" style="width:auto; padding:4px 8px; font-size:11px; background:#ef4444; border:none; border-radius:4px; cursor:pointer;">Clear All</button>
+    </div>
+    
+    <div class="history-scroll" id="historyList"></div>
+    <button class="btn-action btn-process" onclick="closeHistory()">Close</button>
   </div>
 </div>
 
 <script>
 let clipsData = [];
 let sourceFile = null;
-let videoDuration = 0;
 
 document.getElementById('videoInput').addEventListener('change', function(e) {
-  sourceFile = e.target.files[0];
-  if(sourceFile) {
-    document.getElementById('statusText').innerText = "वीडियो लोड हो गया: " + sourceFile.name;
+  if (e.target.files[0]) {
+    sourceFile = e.target.files[0];
+    document.getElementById('statusText').innerText = `वीडियो चुना गया: ${sourceFile.name}`;
   }
 });
 
 function toggleMenu() {
-  const d = document.getElementById('dropdownMenu');
-  d.style.display = d.style.display === 'block' ? 'none' : 'block';
+  const m = document.getElementById('dropdownMenu');
+  m.style.display = (m.style.display === 'block') ? 'none' : 'block';
 }
 
 function newProject() {
-  document.getElementById('videoInput').value = "";
   sourceFile = null;
   clipsData = [];
-  document.getElementById('clipContainer').innerHTML = "";
-  document.getElementById('statusText').innerText = "नया प्रोजेक्ट शुरू करें।";
-  document.getElementById('shuffleBtn').style.display = "none";
-  document.getElementById('exportBtn').style.display = "none";
-  document.getElementById('dropdownMenu').style.display = "none";
+  document.getElementById('videoInput').value = '';
+  document.getElementById('clipContainer').innerHTML = '';
+  document.getElementById('statusText').innerText = 'नया प्रोजेक्ट शुरू करने के लिए तैयार।';
+  document.getElementById('shuffleBtn').style.display = 'none';
+  document.getElementById('exportBtn').style.display = 'none';
+  document.getElementById('pBarCont').style.display = 'none';
+  toggleMenu();
 }
 
 async function processClips() {
-  if (!sourceFile) return alert("कृपया पहले एक वीडियो सेलेक्ट करें!");
+  if (!sourceFile) return alert('कृपया पहले एक वीडियो चुनें!');
   const count = parseInt(document.getElementById('clipCount').value);
+  if (count < 2) return alert('कम से कम 2 क्लिप्स चुनें!');
 
   const status = document.getElementById('statusText');
-  status.innerText = "वीडियो लोड किया जा रहा है...";
+  status.innerText = 'वीडियो लोड किया जा रहा है...';
 
-  const video = document.getElementById('videoPreview');
+  const video = document.getElementById('sourceVideo');
   video.src = URL.createObjectURL(sourceFile);
 
-  video.onloadedmetadata = async function() {
-    videoDuration = video.duration;
-    const clipLength = videoDuration / count;
+  video.onloadedmetadata = () => {
+    const duration = video.duration;
+    const clipDuration = duration / count;
     clipsData = [];
 
-    for(let i = 0; i < count; i++) {
-      let start = i * clipLength;
-      let end = (i + 1) * clipLength;
+    for (let i = 0; i < count; i++) {
       clipsData.push({
         id: i + 1,
         title: `Clip_${i + 1}`,
-        start: start,
-        end: end,
-        duration: (end - start).toFixed(1)
+        start: i * clipDuration,
+        end: (i + 1) * clipDuration,
+        duration: clipDuration.toFixed(1)
       });
     }
 
     renderClips();
-    status.innerText = `तैयार: ${count} क्लिप्स बन गईं! अब शफल करें या एक्सपोर्ट करें।`;
-    document.getElementById('shuffleBtn').style.display = "block";
-    document.getElementById('exportBtn').style.display = "block";
+    status.innerText = `✅ ${count} क्लिप्स तैयार हैं! अब शफल करें या एक्सपोर्ट करें।`;
+    document.getElementById('shuffleBtn').style.display = 'block';
+    document.getElementById('exportBtn').style.display = 'block';
+  };
+
+  video.onerror = () => {
+    status.innerText = '⚠️ यह वीडियो फॉर्मेट ब्राउज़र में सपोर्ट नहीं कर रहा है।';
   };
 }
 
 function renderClips() {
   const container = document.getElementById('clipContainer');
-  container.innerHTML = "";
-  clipsData.forEach((c, index) => {
+  container.innerHTML = '';
+  clipsData.forEach((c, idx) => {
     container.innerHTML += `
       <div class="clip-item">
-        <span><b>क्रम ${index + 1}:</b> ${c.title}</span>
+        <span><b>क्रम ${idx + 1}:</b> ${c.title}</span>
         <span>${c.start.toFixed(1)}s - ${c.end.toFixed(1)}s (${c.duration}s)</span>
       </div>
     `;
@@ -176,16 +190,16 @@ function shuffleClips() {
     [clipsData[i], clipsData[j]] = [clipsData[j], clipsData[i]];
   }
   renderClips();
-  document.getElementById('statusText').innerText = "क्लिप्स शफल (आगे-पीछे) हो चुकी हैं!";
+  document.getElementById('statusText').innerText = '🔀 क्लिप्स का क्रम बदल दिया गया है!';
 }
 
-// Slice single clip using canvas & MediaRecorder
-function cutSingleClip(video, start, end, ratio) {
+// Client-side Video Slicing
+function captureClip(video, start, end, ratio) {
   return new Promise((resolve) => {
     const canvas = document.getElementById('renderCanvas');
     const ctx = canvas.getContext('2d');
 
-    let [rW, rH] = ratio.split(':').map(Number);
+    const [rW, rH] = ratio.split(':').map(Number);
     canvas.width = 1280;
     canvas.height = (1280 / rW) * rH;
 
@@ -194,105 +208,120 @@ function cutSingleClip(video, start, end, ratio) {
 
     video.onseeked = () => {
       const stream = canvas.captureStream(30);
-      
-      // Audio capture
-      let combinedStream = stream;
-      try {
-        const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
-        const src = audioCtx.createMediaElementSource(video);
-        const dest = audioCtx.createMediaStreamDestination();
-        src.connect(dest);
-        src.connect(audioCtx.destination);
-        combinedStream = new MediaStream([...stream.getVideoTracks(), ...dest.stream.getAudioTracks()]);
-      } catch(e) {}
-
       let mediaRecorder;
+
       try {
-        mediaRecorder = new MediaRecorder(combinedStream, { mimeType: 'video/mp4' });
+        mediaRecorder = new MediaRecorder(stream, { mimeType: 'video/webm; codecs=vp8' });
       } catch (e) {
-        mediaRecorder = new MediaRecorder(combinedStream);
+        mediaRecorder = new MediaRecorder(stream);
       }
 
       const chunks = [];
-      mediaRecorder.ondataavailable = (e) => { if(e.data.size > 0) chunks.push(e.data); };
+      mediaRecorder.ondataavailable = (e) => { if (e.data.size > 0) chunks.push(e.data); };
       mediaRecorder.onstop = () => {
-        const blob = new Blob(chunks, { type: 'video/mp4' });
-        resolve(blob);
+        resolve(new Blob(chunks, { type: 'video/mp4' }));
       };
 
       mediaRecorder.start();
       video.play();
 
-      const drawFrame = () => {
+      function draw() {
         if (video.currentTime >= end || video.paused || video.ended) {
           video.pause();
-          mediaRecorder.stop();
+          if (mediaRecorder.state !== 'inactive') mediaRecorder.stop();
         } else {
           ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
-          requestAnimationFrame(drawFrame);
+          requestAnimationFrame(draw);
         }
-      };
-      drawFrame();
+      }
+      draw();
     };
   });
 }
 
 async function exportClips() {
-  const status = document.getElementById('statusText');
   const exportBtn = document.getElementById('exportBtn');
-  exportBtn.disabled = true;
+  const shuffleBtn = document.getElementById('shuffleBtn');
+  const processBtn = document.getElementById('processBtn');
+  const status = document.getElementById('statusText');
+  const pBarCont = document.getElementById('pBarCont');
+  const pBar = document.getElementById('pBar');
 
-  const video = document.getElementById('videoPreview');
+  exportBtn.disabled = true;
+  shuffleBtn.disabled = true;
+  processBtn.disabled = true;
+  pBarCont.style.display = 'block';
+
+  const video = document.getElementById('sourceVideo');
   const ratio = document.getElementById('ratioSelect').value;
   const zip = new JSZip();
 
-  for(let i = 0; i < clipsData.length; i++) {
+  for (let i = 0; i < clipsData.length; i++) {
     const c = clipsData[i];
-    status.innerText = `क्लिप कट हो रही है (${i + 1}/${clipsData.length}): ${c.title}...`;
-    const clipBlob = await cutSingleClip(video, c.start, c.end, ratio);
-    
-    // Naming files in shuffled sequence so VN picks them in order
+    const progress = Math.round(((i) / clipsData.length) * 100);
+    pBar.style.width = progress + '%';
+    status.innerText = `कटिंग क्लिप (${i + 1}/${clipsData.length}): ${c.title}...`;
+
+    const clipBlob = await captureClip(video, c.start, c.end, ratio);
     zip.file(`Seq_${i + 1}_${c.title}.mp4`, clipBlob);
   }
 
-  status.innerText = "ZIP फाइल तैयार हो रही है...";
-  const content = await zip.generateAsync({type: "blob"});
+  pBar.style.width = '100%';
+  status.innerText = '📦 ZIP फाइल बनाई जा रही है...';
+
+  const zipFile = await zip.generateAsync({ type: 'blob' });
+  const downloadUrl = URL.createObjectURL(zipFile);
   
   const a = document.createElement('a');
-  a.href = URL.createObjectURL(content);
-  a.download = `Shuffled_Clips_${Date.now()}.zip`;
+  a.href = downloadUrl;
+  a.download = `Shuffled_VN_${Date.now()}.zip`;
   a.click();
 
-  // Save to History
+  // Save history (Last 10 Items)
   saveHistory(sourceFile.name, clipsData.length, ratio);
 
-  status.innerText = "✅ सभी क्लिप्स कट और शफल होकर ZIP में डाउनलोड हो गईं! VN में इंपोर्ट करें।";
+  status.innerText = '✅ डाउनलोड पूरा हुआ! ZIP खोलकर सारे क्लिप्स VN ऐप में डालें।';
   exportBtn.disabled = false;
+  shuffleBtn.disabled = false;
+  processBtn.disabled = false;
 }
 
+// History Handling (10 Records)
 function saveHistory(name, count, ratio) {
-  let history = JSON.parse(localStorage.getItem('clip_history') || '[]');
-  history.unshift({
+  let list = [];
+  try {
+    list = JSON.parse(localStorage.getItem('clips_history')) || [];
+  } catch (e) { list = []; }
+
+  const record = {
     name: name,
-    clips: count,
+    count: count,
     ratio: ratio,
-    date: new Date().toLocaleDateString() + ' ' + new Date().toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'})
-  });
-  localStorage.setItem('clip_history', JSON.stringify(history.slice(0, 10)));
+    time: new Date().toLocaleDateString('hi-IN', { day: '2-digit', month: 'short' }) + ', ' + new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
+  };
+
+  list.unshift(record);
+  if (list.length > 10) list = list.slice(0, 10);
+  localStorage.setItem('clips_history', JSON.stringify(list));
 }
 
-function showHistory() {
-  document.getElementById('dropdownMenu').style.display = 'none';
-  const list = document.getElementById('historyList');
-  let history = JSON.parse(localStorage.getItem('clip_history') || '[]');
-  
-  if(history.length === 0) {
-    list.innerHTML = "<p style='color:#94a3b8;'>कोई हिस्ट्री उपलब्ध नहीं है।</p>";
+function openHistory() {
+  toggleMenu();
+  const container = document.getElementById('historyList');
+  let list = [];
+  try {
+    list = JSON.parse(localStorage.getItem('clips_history')) || [];
+  } catch(e) { list = []; }
+
+  if (list.length === 0) {
+    container.innerHTML = '<p style="color:#64748b; font-size:13px; text-align:center; padding:15px;">कोई पुराना प्रोजेक्ट नहीं मिला।</p>';
   } else {
-    list.innerHTML = history.map(h => `
-      <div class="history-item">
-        <div><b>📁 ${h.name}</b></div>
-        <div style="color:#94a3b8; font-size:11px; margin-top:3px;">Ratio: ${h.ratio} | Clips: ${h.clips} | 🕒 ${h.date}</div>
+    container.innerHTML = list.map((item, i) => `
+      <div class="history-card">
+        <div style="font-weight:600; color:#f8fafc;">${i + 1}. ${item.name}</div>
+        <div style="color:#94a3b8; font-size:11px; margin-top:4px;">
+          Clips: ${item.count} | Ratio: ${item.ratio} | 🕒 ${item.time}
+        </div>
       </div>
     `).join('');
   }
@@ -301,6 +330,12 @@ function showHistory() {
 
 function closeHistory() {
   document.getElementById('historyModal').style.display = 'none';
+}
+
+function clearHistory() {
+  localStorage.removeItem('clips_history');
+  openHistory();
+  toggleMenu();
 }
 </script>
 </body>
