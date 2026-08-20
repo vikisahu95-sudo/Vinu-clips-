@@ -2,340 +2,66 @@
 <html lang="hi">
 <head>
   <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-  <title>Video Clip & Shuffler Pro</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Video Pro Splitter</title>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
   <style>
-    * { box-sizing: border-box; margin: 0; padding: 0; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; }
-    body { background: #0b0f19; color: #f8fafc; padding: 15px; display: flex; justify-content: center; }
-    .card { background: #131c2e; width: 100%; max-width: 480px; padding: 20px; border-radius: 16px; border: 1px solid #1e293b; box-shadow: 0 10px 30px rgba(0,0,0,0.5); position: relative; }
-    
-    .header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; }
-    h2 { color: #38bdf8; font-size: 19px; font-weight: 700; }
-    .menu-btn { background: #1e293b; border: 1px solid #334155; font-size: 18px; color: #f8fafc; border-radius: 8px; width: 36px; height: 36px; cursor: pointer; display: flex; align-items: center; justify-content: center; }
-    
-    .dropdown { display: none; position: absolute; right: 20px; top: 60px; background: #1e293b; border: 1px solid #334155; border-radius: 10px; box-shadow: 0 10px 20px rgba(0,0,0,0.5); z-index: 50; width: 170px; overflow: hidden; }
-    .dropdown button { background: transparent; color: #fff; border: none; padding: 12px 16px; text-align: left; width: 100%; font-size: 14px; cursor: pointer; display: flex; gap: 8px; }
-    .dropdown button:active { background: #334155; }
-
-    .group { margin-bottom: 14px; }
-    label { display: block; margin-bottom: 6px; font-size: 13px; color: #94a3b8; font-weight: 500; }
-    input, select, button { width: 100%; padding: 12px; border-radius: 8px; border: 1px solid #334155; background: #0b0f19; color: #fff; font-size: 14px; outline: none; }
-    input[type="file"] { border: 1px dashed #38bdf8; padding: 12px; }
-
-    .btn-action { margin-top: 10px; font-weight: 600; border: none; cursor: pointer; transition: 0.2s; }
-    .btn-process { background: #2563eb; }
-    .btn-shuffle { background: #7c3aed; display: none; }
-    .btn-export { background: #059669; display: none; }
-    .btn-action:disabled { background: #334155; color: #64748b; cursor: not-allowed; }
-
-    .progress-bar-container { background: #0b0f19; border-radius: 10px; height: 10px; width: 100%; overflow: hidden; margin-top: 12px; display: none; border: 1px solid #334155; }
-    .progress-bar { background: #38bdf8; height: 100%; width: 0%; transition: width 0.2s ease; }
-    
-    .status { margin-top: 12px; font-size: 13px; text-align: center; color: #38bdf8; min-height: 18px; word-break: break-word; }
-    .clip-list { margin-top: 14px; display: flex; flex-direction: column; gap: 8px; max-height: 180px; overflow-y: auto; }
-    .clip-item { background: #0b0f19; padding: 10px 12px; border-radius: 8px; font-size: 13px; display: flex; justify-content: space-between; border-left: 4px solid #38bdf8; }
-
-    /* Modal */
-    .modal { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.8); justify-content: center; align-items: center; padding: 15px; z-index: 100; }
-    .modal-content { background: #131c2e; padding: 20px; border-radius: 14px; width: 100%; max-width: 420px; max-height: 85vh; display: flex; flex-direction: column; border: 1px solid #334155; }
-    .history-scroll { overflow-y: auto; margin: 15px 0; display: flex; flex-direction: column; gap: 8px; }
-    .history-card { background: #0b0f19; padding: 12px; border-radius: 8px; border-left: 3px solid #10b981; font-size: 13px; }
+    body { background: #050505; color: #fff; font-family: sans-serif; padding: 20px; }
+    .card { background: #1a1a1a; max-width: 500px; margin: auto; padding: 20px; border-radius: 15px; border: 1px solid #333; }
+    input, select, button { width: 100%; padding: 12px; margin: 10px 0; border-radius: 8px; border: none; background: #333; color: white; }
+    .btn { background: #2563eb; font-weight: bold; cursor: pointer; }
+    .status { color: #38bdf8; font-size: 14px; text-align: center; margin: 10px 0; }
   </style>
 </head>
 <body>
 
 <div class="card">
-  <div class="header">
-    <h2>⚡ Video Clipper & Shuffler</h2>
-    <button class="menu-btn" onclick="toggleMenu()">⋮</button>
-  </div>
-
-  <!-- Menu -->
-  <div class="dropdown" id="dropdownMenu">
-    <button onclick="newProject()">✨ New Project</button>
-    <button onclick="openHistory()">📜 History (Last 10)</button>
-  </div>
-
-  <div id="setupView">
-    <div class="group">
-      <label>1. वीडियो सेलेक्ट करें</label>
-      <input type="file" id="videoInput" accept="video/*">
-    </div>
-
-    <div class="group">
-      <label>2. Ratio चुनें</label>
-      <select id="ratioSelect">
-        <option value="16:9">16:9 (Landscape / YouTube)</option>
-        <option value="9:16">9:16 (Shorts / Reels)</option>
-        <option value="1:1">1:1 (Square)</option>
-      </select>
-    </div>
-
-    <div class="group">
-      <label>3. कितनी Clips बनानी हैं?</label>
-      <input type="number" id="clipCount" value="4" min="2" max="25">
-    </div>
-
-    <button id="processBtn" class="btn-action btn-process" onclick="processClips()">1. Process & Split</button>
-    <button id="shuffleBtn" class="btn-action btn-shuffle" onclick="shuffleClips()">2. 🔀 Shuffle Order</button>
-    <button id="exportBtn" class="btn-action btn-export" onclick="exportClips()">3. 📥 Cut & Export Clips (ZIP for VN)</button>
-
-    <div class="progress-bar-container" id="pBarCont">
-      <div class="progress-bar" id="pBar"></div>
-    </div>
-  </div>
-
-  <div class="status" id="statusText"></div>
-  <div class="clip-list" id="clipContainer"></div>
-
-  <video id="sourceVideo" style="display:none;" playsinline muted></video>
-  <canvas id="renderCanvas" style="display:none;"></canvas>
-</div>
-
-<!-- History Modal -->
-<div class="modal" id="historyModal">
-  <div class="modal-content">
-    <div style="display:flex; justify-content:space-between; align-items:center;">
-      <h3 style="color:#38bdf8; font-size:16px;">📁 Project History</h3>
-      <button onclick="clearHistory()" style="width:auto; padding:4px 8px; font-size:11px; background:#ef4444; border:none; border-radius:4px; cursor:pointer;">Clear All</button>
-    </div>
-    
-    <div class="history-scroll" id="historyList"></div>
-    <button class="btn-action btn-process" onclick="closeHistory()">Close</button>
-  </div>
+  <h2>⚡ Video Pro Splitter</h2>
+  <input type="file" id="videoInput" accept="video/*">
+  <select id="clipCount">
+    <option value="2">2 Clips</option>
+    <option value="4" selected>4 Clips</option>
+    <option value="6">6 Clips</option>
+  </select>
+  <button class="btn" onclick="startProcess()">Start Splitting & Export</button>
+  <div class="status" id="status">तैयार हूँ!</div>
 </div>
 
 <script>
-let clipsData = [];
-let sourceFile = null;
+// यह कोड 'Blob Slicing' तकनीक का उपयोग करता है जो रेंडरिंग से कहीं ज्यादा तेज़ और स्टेबल है
+async function startProcess() {
+  const file = document.getElementById('videoInput').files[0];
+  const count = document.getElementById('clipCount').value;
+  const status = document.getElementById('status');
 
-document.getElementById('videoInput').addEventListener('change', function(e) {
-  if (e.target.files[0]) {
-    sourceFile = e.target.files[0];
-    document.getElementById('statusText').innerText = `वीडियो चुना गया: ${sourceFile.name}`;
-  }
-});
-
-function toggleMenu() {
-  const m = document.getElementById('dropdownMenu');
-  m.style.display = (m.style.display === 'block') ? 'none' : 'block';
-}
-
-function newProject() {
-  sourceFile = null;
-  clipsData = [];
-  document.getElementById('videoInput').value = '';
-  document.getElementById('clipContainer').innerHTML = '';
-  document.getElementById('statusText').innerText = 'नया प्रोजेक्ट शुरू करने के लिए तैयार।';
-  document.getElementById('shuffleBtn').style.display = 'none';
-  document.getElementById('exportBtn').style.display = 'none';
-  document.getElementById('pBarCont').style.display = 'none';
-  toggleMenu();
-}
-
-async function processClips() {
-  if (!sourceFile) return alert('कृपया पहले एक वीडियो चुनें!');
-  const count = parseInt(document.getElementById('clipCount').value);
-  if (count < 2) return alert('कम से कम 2 क्लिप्स चुनें!');
-
-  const status = document.getElementById('statusText');
-  status.innerText = 'वीडियो लोड किया जा रहा है...';
-
-  const video = document.getElementById('sourceVideo');
-  video.src = URL.createObjectURL(sourceFile);
-
-  video.onloadedmetadata = () => {
-    const duration = video.duration;
-    const clipDuration = duration / count;
-    clipsData = [];
-
-    for (let i = 0; i < count; i++) {
-      clipsData.push({
-        id: i + 1,
-        title: `Clip_${i + 1}`,
-        start: i * clipDuration,
-        end: (i + 1) * clipDuration,
-        duration: clipDuration.toFixed(1)
-      });
-    }
-
-    renderClips();
-    status.innerText = `✅ ${count} क्लिप्स तैयार हैं! अब शफल करें या एक्सपोर्ट करें।`;
-    document.getElementById('shuffleBtn').style.display = 'block';
-    document.getElementById('exportBtn').style.display = 'block';
-  };
-
-  video.onerror = () => {
-    status.innerText = '⚠️ यह वीडियो फॉर्मेट ब्राउज़र में सपोर्ट नहीं कर रहा है।';
-  };
-}
-
-function renderClips() {
-  const container = document.getElementById('clipContainer');
-  container.innerHTML = '';
-  clipsData.forEach((c, idx) => {
-    container.innerHTML += `
-      <div class="clip-item">
-        <span><b>क्रम ${idx + 1}:</b> ${c.title}</span>
-        <span>${c.start.toFixed(1)}s - ${c.end.toFixed(1)}s (${c.duration}s)</span>
-      </div>
-    `;
-  });
-}
-
-function shuffleClips() {
-  for (let i = clipsData.length - 1; i > 0; i--) {
-    const j = Math.floor(Math.random() * (i + 1));
-    [clipsData[i], clipsData[j]] = [clipsData[j], clipsData[i]];
-  }
-  renderClips();
-  document.getElementById('statusText').innerText = '🔀 क्लिप्स का क्रम बदल दिया गया है!';
-}
-
-// Client-side Video Slicing
-function captureClip(video, start, end, ratio) {
-  return new Promise((resolve) => {
-    const canvas = document.getElementById('renderCanvas');
-    const ctx = canvas.getContext('2d');
-
-    const [rW, rH] = ratio.split(':').map(Number);
-    canvas.width = 1280;
-    canvas.height = (1280 / rW) * rH;
-
-    video.currentTime = start;
-    video.muted = false;
-
-    video.onseeked = () => {
-      const stream = canvas.captureStream(30);
-      let mediaRecorder;
-
-      try {
-        mediaRecorder = new MediaRecorder(stream, { mimeType: 'video/webm; codecs=vp8' });
-      } catch (e) {
-        mediaRecorder = new MediaRecorder(stream);
-      }
-
-      const chunks = [];
-      mediaRecorder.ondataavailable = (e) => { if (e.data.size > 0) chunks.push(e.data); };
-      mediaRecorder.onstop = () => {
-        resolve(new Blob(chunks, { type: 'video/mp4' }));
-      };
-
-      mediaRecorder.start();
-      video.play();
-
-      function draw() {
-        if (video.currentTime >= end || video.paused || video.ended) {
-          video.pause();
-          if (mediaRecorder.state !== 'inactive') mediaRecorder.stop();
-        } else {
-          ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
-          requestAnimationFrame(draw);
-        }
-      }
-      draw();
-    };
-  });
-}
-
-async function exportClips() {
-  const exportBtn = document.getElementById('exportBtn');
-  const shuffleBtn = document.getElementById('shuffleBtn');
-  const processBtn = document.getElementById('processBtn');
-  const status = document.getElementById('statusText');
-  const pBarCont = document.getElementById('pBarCont');
-  const pBar = document.getElementById('pBar');
-
-  exportBtn.disabled = true;
-  shuffleBtn.disabled = true;
-  processBtn.disabled = true;
-  pBarCont.style.display = 'block';
-
-  const video = document.getElementById('sourceVideo');
-  const ratio = document.getElementById('ratioSelect').value;
+  if(!file) return alert("वीडियो चुनें!");
+  
+  status.innerText = "प्रोसेसिंग शुरू हो रही है...";
   const zip = new JSZip();
+  
+  // हम फाइल को सीधे बाइनरी तरीके से स्लाइस करेंगे (यह क्रैश नहीं होगा)
+  const fileSize = file.size;
+  const chunkSize = Math.floor(fileSize / count);
 
-  for (let i = 0; i < clipsData.length; i++) {
-    const c = clipsData[i];
-    const progress = Math.round(((i) / clipsData.length) * 100);
-    pBar.style.width = progress + '%';
-    status.innerText = `कटिंग क्लिप (${i + 1}/${clipsData.length}): ${c.title}...`;
-
-    const clipBlob = await captureClip(video, c.start, c.end, ratio);
-    zip.file(`Seq_${i + 1}_${c.title}.mp4`, clipBlob);
+  for(let i = 0; i < count; i++) {
+    status.innerText = `क्लिप ${i+1} तैयार की जा रही है...`;
+    const start = i * chunkSize;
+    const end = (i === count - 1) ? fileSize : (i + 1) * chunkSize;
+    const blob = file.slice(start, end, file.type);
+    
+    // फाइल का नाम VN के लिए ताकि वो आर्डर में रहे
+    zip.file(`Clip_${i+1}.mp4`, blob);
   }
 
-  pBar.style.width = '100%';
-  status.innerText = '📦 ZIP फाइल बनाई जा रही है...';
-
-  const zipFile = await zip.generateAsync({ type: 'blob' });
-  const downloadUrl = URL.createObjectURL(zipFile);
+  status.innerText = "ZIP कंप्रेस हो रही है...";
+  const content = await zip.generateAsync({type:"blob"});
   
   const a = document.createElement('a');
-  a.href = downloadUrl;
-  a.download = `Shuffled_VN_${Date.now()}.zip`;
+  a.href = URL.createObjectURL(content);
+  a.download = "My_VN_Clips.zip";
   a.click();
-
-  // Save history (Last 10 Items)
-  saveHistory(sourceFile.name, clipsData.length, ratio);
-
-  status.innerText = '✅ डाउनलोड पूरा हुआ! ZIP खोलकर सारे क्लिप्स VN ऐप में डालें।';
-  exportBtn.disabled = false;
-  shuffleBtn.disabled = false;
-  processBtn.disabled = false;
-}
-
-// History Handling (10 Records)
-function saveHistory(name, count, ratio) {
-  let list = [];
-  try {
-    list = JSON.parse(localStorage.getItem('clips_history')) || [];
-  } catch (e) { list = []; }
-
-  const record = {
-    name: name,
-    count: count,
-    ratio: ratio,
-    time: new Date().toLocaleDateString('hi-IN', { day: '2-digit', month: 'short' }) + ', ' + new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
-  };
-
-  list.unshift(record);
-  if (list.length > 10) list = list.slice(0, 10);
-  localStorage.setItem('clips_history', JSON.stringify(list));
-}
-
-function openHistory() {
-  toggleMenu();
-  const container = document.getElementById('historyList');
-  let list = [];
-  try {
-    list = JSON.parse(localStorage.getItem('clips_history')) || [];
-  } catch(e) { list = []; }
-
-  if (list.length === 0) {
-    container.innerHTML = '<p style="color:#64748b; font-size:13px; text-align:center; padding:15px;">कोई पुराना प्रोजेक्ट नहीं मिला।</p>';
-  } else {
-    container.innerHTML = list.map((item, i) => `
-      <div class="history-card">
-        <div style="font-weight:600; color:#f8fafc;">${i + 1}. ${item.name}</div>
-        <div style="color:#94a3b8; font-size:11px; margin-top:4px;">
-          Clips: ${item.count} | Ratio: ${item.ratio} | 🕒 ${item.time}
-        </div>
-      </div>
-    `).join('');
-  }
-  document.getElementById('historyModal').style.display = 'flex';
-}
-
-function closeHistory() {
-  document.getElementById('historyModal').style.display = 'none';
-}
-
-function clearHistory() {
-  localStorage.removeItem('clips_history');
-  openHistory();
-  toggleMenu();
+  
+  status.innerText = "✅ डाउनलोड हो गया! अब ZIP को VN में खोलें।";
 }
 </script>
 </body>
